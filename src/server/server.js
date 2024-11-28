@@ -5,7 +5,7 @@ const { loadModel } = require("../services/modelPredict");
 
 const init = async () => {
   const server = Hapi.server({
-    port: 8080,
+    port: process.env.PORT,
     host: "localhost",
     routes: {
       cors: {
