@@ -1,17 +1,15 @@
 const { uploadImageToGCS } = require("../services/uploadData");
 const { predict } = require("../services/modelPredict");
 const crypto = require("crypto");
-const { storeDiagnosis } = require("../services/storeData");
-const { getAllDiagnoses, getDiagnosed } = require("../services/getData");
-const { deleteDiagnosed } = require("../services/deleteData");
+const { storeDiagnosis, getAllDiagnoses, getDiagnosed, deleteDiagnosed } = require("../services/firestoreData");
 
-// Memposting datanya
+// Memproses datanya
 const postDiagnoseHandler = async (request, h) => {
-  const { image } = request.payload;
+  const { image, userId } = request.payload;
   const { model } = request.server.app;
 
   // simpen image ke cloud storage
-  const imageUrl = await uploadImageToGCS(Buffer.from(image, "base64"), { image });
+  const imageUrl = await uploadImageToGCS(Buffer.from(image, "base64"), userId);
 
   // ngembaliin response
   const id = crypto.randomUUID();
@@ -20,14 +18,14 @@ const postDiagnoseHandler = async (request, h) => {
 
   const data = {
     diagnosedId: id,
-    createdAt: createdAt,
     imageUrl: imageUrl,
     diagnoses: diagnoses,
+    createdAt: createdAt,
   };
 
   const response = h.response({
     status: "success",
-    message: "diagnosis berhasil",
+    message: "Diagnosis berhasil",
     data,
   });
 
@@ -38,9 +36,11 @@ const postDiagnoseHandler = async (request, h) => {
 // Menyimpan data
 const postSaveDiagnoseHandler = async (request, h) => {
   const { userId } = request.params;
-  const { diagnosedId, namaPenyakit, deskripsi, penyembuhan } = request.payload;
+  const { urlImage, diagnosedId, namaTanaman, namaPenyakit, deskripsi, penyembuhan } = request.payload;
 
   const diagnosisData = {
+    urlImage: urlImage,
+    namaTanaman: namaTanaman,
     namaPenyakit: namaPenyakit,
     deskripsi: deskripsi,
     penyembuhan: penyembuhan,
@@ -48,9 +48,12 @@ const postSaveDiagnoseHandler = async (request, h) => {
 
   await storeDiagnosis(userId, diagnosedId, diagnosisData);
 
+  const data = { diagnosedId: diagnosedId };
+
   const response = h.response({
     status: "success",
     message: "Diagnosis berhasil disimpan.",
+    data,
   });
 
   response.code(201);
@@ -61,12 +64,17 @@ const postSaveDiagnoseHandler = async (request, h) => {
 const getAllDiagnosedHandler = async (request, h) => {
   const { userId } = request.params;
 
-  const diagnoses = await getAllDiagnoses(userId);
+  const diagnosesData = await getAllDiagnoses(userId);
+
+  const diagnoses = Object.entries(diagnosesData).map(([id, diagnosis]) => ({
+    id,
+    ...diagnosis,
+  }));
 
   const response = h.response({
     status: "success",
-    message: "menampilkan seluruh diagnosa",
-    diagnoses,
+    message: "Menampilkan seluruh diagnosa",
+    data: { diagnoses: diagnoses },
   });
 
   response.code(200);
@@ -81,7 +89,7 @@ const getIdDiagnosedHandler = async (request, h) => {
 
   const response = h.response({
     status: "success",
-    message: `menampilkan data ${diagnosedId}`,
+    message: `Berhasil menampilkan data diagnosis ${diagnosedId}.`,
     data,
   });
 
@@ -97,7 +105,7 @@ const deleteIdDiagnosedHandler = async (request, h) => {
 
   const response = h.response({
     status: "success",
-    message: `data ${diagnosedId} berhasil dihapus`,
+    message: `Data diagnosis ${diagnosedId} berhasil dihapus.`,
   });
 
   response.code(200);

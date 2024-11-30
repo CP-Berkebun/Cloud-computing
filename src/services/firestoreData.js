@@ -7,6 +7,13 @@ const firestore = new Firestore({
   keyFilename: process.env.SERVICE_ACCOUNT,
 });
 
+// Menyimpan data
+const storeDiagnosis = async (userId, diagnosedId, diagnosisData) => {
+  const docRef = firestore.collection("Berkebun+").doc(userId).collection("diagnoses").doc(diagnosedId);
+  await docRef.set({ ...diagnosisData });
+  return "Data saved successfully";
+};
+
 // Menampilkan semua hasil diagnosa
 const getAllDiagnoses = async (userId) => {
   const docRef = firestore.collection("Berkebun+").doc(userId);
@@ -30,4 +37,12 @@ const getDiagnosed = async (userId, diagnosedId) => {
   return snapshot.data();
 };
 
-module.exports = { getAllDiagnoses, getDiagnosed };
+// Menghapus data firestore
+const deleteDiagnosed = async (userId, diagnosedId) => {
+  const docRef = firestore.collection("Berkebun+").doc(userId).collection("diagnoses").doc(diagnosedId);
+  await docRef.delete();
+
+  return `Data berhasil dihapus`;
+};
+
+module.exports = { storeDiagnosis, deleteDiagnosed, getAllDiagnoses, getDiagnosed };

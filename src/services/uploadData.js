@@ -7,10 +7,10 @@ const storage = new Storage({
   keyFilename: process.env.SERVICE_ACCOUNT,
 });
 
-const bucketName = storage.bucket(process.env.BERKEBUN_BUCKET);
+const bucketName = storage.bucket(process.env.BERKEBUN_USER_BUCKET);
 
-const uploadImageToGCS = async (buffer) => {
-  const fileName = `user-img/${Date.now()}`;
+const uploadImageToGCS = async (buffer, userId) => {
+  const fileName = `${userId}/${Date.now()}`;
   const file = bucketName.file(fileName);
 
   // Create a writable stream
@@ -34,7 +34,7 @@ const uploadImageToGCS = async (buffer) => {
   // End the stream with the buffer data
   stream.end(buffer);
 
-  return `https://storage.googleapis.com/${process.env.BERKEBUN_BUCKET}/${fileName}`;
+  return `https://storage.googleapis.com/${process.env.BERKEBUN_USER_BUCKET}/${fileName}`;
 };
 
 module.exports = { uploadImageToGCS };
