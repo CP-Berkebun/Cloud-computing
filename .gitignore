@@ -1,3 +1,9 @@
 node_modules
 .env
 hafiz-belajar-gcp-deploy-201989a80035.json
+berkebun-capstone-e87f82a34d2b.json
+disease.json
+upload.js
+src/utils
+src/services/modelPredict.js
+Dockerfile

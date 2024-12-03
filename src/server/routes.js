@@ -7,6 +7,7 @@ const routes = [
     handler: postDiagnoseHandler,
     options: {
       payload: {
+        maxBytes: 10 * 1024 * 1024,
         allow: "multipart/form-data",
         multipart: true,
       },

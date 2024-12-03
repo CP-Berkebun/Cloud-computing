@@ -1,20 +1,32 @@
 const { uploadImageToGCS } = require("../services/uploadData");
-const { predict } = require("../services/modelPredict");
+const axios = require("axios");
+const FormData = require("form-data");
 const crypto = require("crypto");
-const { storeDiagnosis, getAllDiagnoses, getDiagnosed, deleteDiagnosed } = require("../services/firestoreData");
+const { storeDiagnosis, getDataDisease, getAllDiagnoses, getDiagnosed, deleteDiagnosed } = require("../services/firestoreData");
 
 // Memproses datanya
 const postDiagnoseHandler = async (request, h) => {
   const { image, userId } = request.payload;
-  const { model } = request.server.app;
+  const urlMl = process.env.URL_ML;
 
   // simpen image ke cloud storage
   const imageUrl = await uploadImageToGCS(Buffer.from(image, "base64"), userId);
 
+  const formData = new FormData();
+  formData.append("file", Buffer.from(image, "base64"), {
+    filename: "user-image.jpg",
+    contentType: "image/jpeg",
+  });
+
+  const mlResponse = await axios.post(urlMl, formData, {
+    headers: formData.getHeaders(),
+  });
+
   // ngembaliin response
   const id = crypto.randomUUID();
   const createdAt = new Date().toISOString();
-  const diagnoses = await predict(model, image);
+  const plant = mlResponse.data.plant;
+  const diagnoses = await getDataDisease(plant);
 
   const data = {
     diagnosedId: id,
@@ -36,14 +48,15 @@ const postDiagnoseHandler = async (request, h) => {
 // Menyimpan data
 const postSaveDiagnoseHandler = async (request, h) => {
   const { userId } = request.params;
-  const { urlImage, diagnosedId, namaTanaman, namaPenyakit, deskripsi, penyembuhan } = request.payload;
+  const { imageUrl, plant, diagnosedId, tumbuhan, penyakit_id, deskripsi, treatment } = request.payload;
 
   const diagnosisData = {
-    urlImage: urlImage,
-    namaTanaman: namaTanaman,
-    namaPenyakit: namaPenyakit,
+    imageUrl: imageUrl,
+    plant: plant,
+    tumbuhan: tumbuhan,
+    penyakit_id: penyakit_id,
     deskripsi: deskripsi,
-    penyembuhan: penyembuhan,
+    treatment: treatment,
   };
 
   await storeDiagnosis(userId, diagnosedId, diagnosisData);
@@ -89,7 +102,7 @@ const getIdDiagnosedHandler = async (request, h) => {
 
   const response = h.response({
     status: "success",
-    message: `Berhasil menampilkan data diagnosis ${diagnosedId}.`,
+    message: `Berhasil menampilkan data diagnosis.`,
     data,
   });
 
@@ -105,7 +118,7 @@ const deleteIdDiagnosedHandler = async (request, h) => {
 
   const response = h.response({
     status: "success",
-    message: `Data diagnosis ${diagnosedId} berhasil dihapus.`,
+    message: `Data diagnosis berhasil dihapus.`,
   });
 
   response.code(200);

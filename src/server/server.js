@@ -1,7 +1,6 @@
 const Hapi = require("@hapi/hapi");
 const routes = require("./routes");
 const InputError = require("../exceptions/InputError");
-const { loadModel } = require("../services/modelPredict");
 
 const init = async () => {
   const server = Hapi.server({
@@ -13,9 +12,6 @@ const init = async () => {
       },
     },
   });
-
-  const model = await loadModel();
-  server.app.model = model;
 
   server.route(routes);
 
