@@ -1,0 +1,10 @@
+runtime: nodejs18
+service: default
+env: standard
+
+env_variables:
+  PROJECT_ID: "berkebun-capstone"
+  BERKEBUN_USER_BUCKET: "berkebun_user_bucket"
+  SERVICE_ACCOUNT: "berkebun-capstone-e87f82a34d2b.json"
+  URL_ML: "https://ml-webservice-336324604153.asia-southeast2.run.app/predict"
+  PORT: "8080"
